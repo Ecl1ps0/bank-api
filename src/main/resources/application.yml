@@ -1,0 +1,25 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: "bank-api"
+  data:
+    mongodb:
+      uri: ${spring.data.mongodb.uri}
+    redis:
+      username: ${spring.data.redis.username}
+      host: ${spring.data.redis.host}
+      password: ${spring.data.redis.password}
+      port: ${spring.data.redis.port}
+
+  main:
+    web-application-type: reactive
+
+token:
+  accesTokenSecret: "sssssee"
+  refreshTokenSecret: "123sss"
+  issuer: "issue_some"
+  accessTokenExpirationMinutes: 20
+  refreshTokenExpirationDays: 3

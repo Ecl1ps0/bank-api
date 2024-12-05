@@ -1,0 +1,32 @@
+{"properties": [
+  {
+    "name": "logging.level[org.mongodb]",
+    "type": "java.lang.String",
+    "description": "A description for 'logging.level[org.mongodb]'"
+  },
+  {
+    "name": "token.acces-token-secret",
+    "type": "java.lang.String",
+    "description": "A description for 'token.acces-token-secret'"
+  },
+  {
+    "name": "token.refreshTokenSecret",
+    "type": "java.lang.String",
+    "description": "A description for 'token.refreshTokenSecret'"
+  },
+  {
+    "name": "token.issuer",
+    "type": "java.lang.String",
+    "description": "A description for 'token.issuer'"
+  },
+  {
+    "name": "token.accessTokenExpirationMinutes",
+    "type": "java.lang.String",
+    "description": "A description for 'token.accessTokenExpirationMinutes'"
+  },
+  {
+    "name": "token.refreshTokenExpirationDays",
+    "type": "java.lang.String",
+    "description": "A description for 'token.refreshTokenExpirationDays'"
+  }
+]}
