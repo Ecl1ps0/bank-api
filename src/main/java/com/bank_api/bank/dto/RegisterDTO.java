@@ -2,8 +2,6 @@ package com.bank_api.bank.dto;
 
 import java.time.LocalDate;
 
-import com.mongodb.lang.Nullable;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +25,6 @@ public class RegisterDTO {
     @Size(min = 2, max = 25, message = "Surname must be between 2 and 25 characters")
     private String surname;
 
-    @Nullable
     @Size(max = 25, message = "Patronymic must not exceed 25 characters")
     private String patronymic;
 
@@ -39,7 +36,6 @@ public class RegisterDTO {
     @Pattern(regexp = "\\+?\\d{10,15}", message = "Invalid phone number format")
     private String phoneNumber;
 
-    @Nullable
     @Size(max = 100, message = "Address must not exceed 100 characters")
     private String address;
 

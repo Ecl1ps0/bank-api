@@ -1,21 +1,28 @@
 package com.bank_api.bank.utils;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
+import java.io.IOException;
+import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.bank_api.bank.models.User;
 import com.bank_api.bank.service.UserService;
 
 import io.micrometer.common.util.StringUtils;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
-import reactor.core.publisher.Mono;
 
 @Log4j2
 @Component
-public class AuthTokenFilter implements WebFilter {
+public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtGenerator jwtGenerator;
@@ -24,41 +31,52 @@ public class AuthTokenFilter implements WebFilter {
     private UserService userService;
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-
-        if (StringUtils.isEmpty(authHeader)) {
-            return chain.filter(exchange);
-        }
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         
+        String authHeader = request.getHeader("Authorization");
+        if (StringUtils.isEmpty(authHeader)) {
+            writeErrorResponse(response, "Authorization header is empty");
+        };
+
         String token = authHeader.substring(7);
         if (StringUtils.isEmpty(token) || token.isBlank()) {
-            log.error("TOKEN IS EMPTY");
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return Mono.empty();
+            writeErrorResponse(response, "Token is empty");
+        }
+
+        if (!jwtGenerator.validateToken(token, false)) {
+            writeErrorResponse(response, "Invalid token");
         }
 
         String userId = jwtGenerator.getUserIdFromToken(token, false);
         if (StringUtils.isEmpty(userId)) {
-            log.warn("Token validation failed: unable to extract user ID");
-            if (!exchange.getResponse().isCommitted()) {
-                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                }
-            return exchange.getResponse().setComplete();
+            writeErrorResponse(response, "Fail to get user id from token");
         }
 
-        return userService.findById(userId)
-            .flatMap(user -> {
-                log.info("User successfully authenticated: {}", userId);
-                return chain.filter(exchange);
-            })
-            .onErrorResume(e -> {
-                log.error("Error during user lookup", e);
-                if (!exchange.getResponse().isCommitted()) {
-                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                }
-                return exchange.getResponse().setComplete();
-            });
+        Optional<User> user = this.userService.findById(userId);
+        if (!user.isPresent()) {
+            writeErrorResponse(response, "User does not exist");
+        }
+
+        try {
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user.get(), null, user.get().getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (Exception e) {
+            writeErrorResponse(response, e.getMessage());
+            return;
+        }
+        filterChain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/auth/");
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, String message) throws IOException, ServletException {
+        log.error("Authentication error: {}", message);
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
     }
 
 }
