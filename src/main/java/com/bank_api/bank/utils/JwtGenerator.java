@@ -38,7 +38,7 @@ public class JwtGenerator {
         this.issuer = issuer;
 
         this.accessTokenExp = accessTokenExpirationMinutes * 60 * 1000;
-        this.refreshTokenExp = refreshTokenExpirationDays * 60 * 60 * 1000;
+        this.refreshTokenExp = refreshTokenExpirationDays * 24 * 60 * 60 * 1000;
 
         accessTokenAlgorithm = Algorithm.HMAC256(accessTokenSecret);
         refreshTokenAlgorithm = Algorithm.HMAC256(refreshTokenSecret);
@@ -56,7 +56,7 @@ public class JwtGenerator {
     public String generateAccessToken(User user) {
         return JWT.create()
             .withIssuer(this.issuer)
-            .withSubject(user.getId().toHexString())
+            .withSubject(user.getId().toString())
             .withIssuedAt(new Date())
             .withExpiresAt(new Date(new Date().getTime() + this.accessTokenExp))
             .sign(this.accessTokenAlgorithm);
@@ -65,7 +65,7 @@ public class JwtGenerator {
     public String generateRefreshToken(User user) {
         return JWT.create()
             .withIssuer(this.issuer)
-            .withSubject(user.getId().toHexString())
+            .withSubject(user.getId().toString())
             .withIssuedAt(new Date())
             .withExpiresAt(new Date(new Date().getTime() + this.refreshTokenExp))
             .sign(this.refreshTokenAlgorithm);
