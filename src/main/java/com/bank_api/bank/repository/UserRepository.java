@@ -1,14 +1,18 @@
 package com.bank_api.bank.repository;
 
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.bank_api.bank.models.User;
 
-import reactor.core.publisher.Mono;
-
 @Repository
-public interface UserRepository extends ReactiveMongoRepository<User, ObjectId> {
-    public Mono<User> findUserByPhoneNumber(String phoneNumber);
+public interface UserRepository extends JpaRepository<User, UUID> {
+    
+    @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber")
+    public Optional<User> findByPhoneNumber(String phoneNumber);
+
 }

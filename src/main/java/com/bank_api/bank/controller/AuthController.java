@@ -3,7 +3,7 @@ package com.bank_api.bank.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,10 +13,7 @@ import com.bank_api.bank.dto.LoginDTO;
 import com.bank_api.bank.dto.RegisterDTO;
 import com.bank_api.bank.dto.TokenDTO;
 import com.bank_api.bank.dto.UpdateTokenDTO;
-import com.bank_api.bank.service.UserService;
-
-import jakarta.validation.Valid;
-import reactor.core.publisher.Mono;
+import com.bank_api.bank.service.AuthService;
 
 
 @RestController
@@ -24,28 +21,28 @@ import reactor.core.publisher.Mono;
 public class AuthController {
 
     @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     @Autowired
-    private ReactiveAuthenticationManager manager;
+    private AuthenticationManager manager;
 
     @PostMapping("/register")
-    public Mono<ResponseEntity<String>> registerUser(@Valid @RequestBody RegisterDTO entity) {
-        return this.userService.saveUser(entity)
-            .map(userId -> ResponseEntity.status(HttpStatus.CREATED).body(String.format("User created with id: %s", userId)))
-            .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(e.getMessage())));
+    public ResponseEntity<String> registerUser(@RequestBody RegisterDTO entity) {
+        String userId = this.authService.saveUser(entity);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userId);
     }
 
     @PostMapping("/login")
-    public Mono<ResponseEntity<TokenDTO>> postMethodName(@Valid @RequestBody LoginDTO entity) {
-        return this.userService.loginUser(entity, this.manager)
-            .map(tokenDTO -> ResponseEntity.ok().body(tokenDTO));
+    public ResponseEntity<TokenDTO> login(@RequestBody LoginDTO entity) {
+        TokenDTO tokenDTO = this.authService.loginUser(entity, this.manager);
+        return ResponseEntity.ok().body(tokenDTO);
     }
 
-    @PostMapping("/get-token")
-    public Mono<ResponseEntity<TokenDTO>> postMethodName(@RequestBody UpdateTokenDTO updateToken) {
-        return this.userService.getNewAccessToken(updateToken.getRefreshToken())
-            .map(token -> ResponseEntity.ok().body(token));
+    @PostMapping("/token")
+    public ResponseEntity<TokenDTO> getNewToken(@RequestBody UpdateTokenDTO updateToken) {
+        TokenDTO token = this.authService.getNewAccessToken(updateToken.getRefreshToken());
+        return ResponseEntity.ok().body(token);
+
     }
     
 }

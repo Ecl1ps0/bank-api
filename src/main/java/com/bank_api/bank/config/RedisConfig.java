@@ -1,14 +1,11 @@
 package com.bank_api.bank.config;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -24,22 +21,22 @@ public class RedisConfig {
     private String password;
 
     @Bean
-    public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory() {
+    public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
         config.setPassword(password);
-
         return new LettuceConnectionFactory(config);
     }
 
-    @Bean(name = "reactiveRedisTemplate")
-    public ReactiveRedisTemplate<String, String> reactiveRedisTemplate( @Qualifier("reactiveRedisConnectionFactory") ReactiveRedisConnectionFactory factory) {
-        return new ReactiveRedisTemplate<>(
-            factory,
-            RedisSerializationContext.<String, String>newSerializationContext(new StringRedisSerializer())
-                .hashValue(new StringRedisSerializer())
-                .hashKey(new StringRedisSerializer())
-                .build()
-        );
+    @Bean
+    public RedisTemplate<String, String> redisTemplate() {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory());
+        template.setDefaultSerializer(new StringRedisSerializer());
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new StringRedisSerializer());
+        return template;
     }
 
 }
