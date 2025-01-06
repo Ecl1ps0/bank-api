@@ -36,25 +36,30 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         if (StringUtils.isEmpty(authHeader)) {
             writeErrorResponse(response, "Authorization header is empty");
+            return;
         };
 
         String token = authHeader.substring(7);
         if (StringUtils.isEmpty(token) || token.isBlank()) {
             writeErrorResponse(response, "Token is empty");
+            return;
         }
 
         if (!jwtGenerator.validateToken(token, false)) {
             writeErrorResponse(response, "Invalid token");
+            return;
         }
 
         String userId = jwtGenerator.getUserIdFromToken(token, false);
         if (StringUtils.isEmpty(userId)) {
             writeErrorResponse(response, "Fail to get user id from token");
+            return;
         }
 
         Optional<User> user = this.userService.findById(userId);
         if (!user.isPresent()) {
             writeErrorResponse(response, "User does not exist");
+            return;
         }
 
         try {
@@ -65,6 +70,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             writeErrorResponse(response, e.getMessage());
             return;
         }
+        
         filterChain.doFilter(request, response);
     }
 
@@ -76,7 +82,20 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     private void writeErrorResponse(HttpServletResponse response, String message) throws IOException, ServletException {
         log.error("Authentication error: {}", message);
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+        response.getWriter().write(
+            String.format(
+                "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"Unauthorized\",\"message\":\"%s\"}",
+                java.time.Instant.now(),
+                HttpServletResponse.SC_UNAUTHORIZED,
+                message
+            )
+        );
+        
+        response.getWriter().flush();
     }
 
 }
