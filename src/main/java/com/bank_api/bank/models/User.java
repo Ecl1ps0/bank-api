@@ -33,7 +33,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import reactor.core.publisher.Mono;
+
 
 @Data
 @NoArgsConstructor
@@ -138,8 +138,4 @@ public class User implements UserDetails {
         return true;
     }
 
-    public Mono<? extends Object> thenReturn(Boolean isAdded) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'thenReturn'");
-    }
 }
